@@ -88,4 +88,10 @@ repositories {
 dependencies {
   implementation project(':expo-modules-core')
   implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:${getKotlinVersion()}"
+  implementation 'com.github.doublesymmetry:kotlinaudio:v2.0.0-rc4'
+
+  // Make sure we're using androidx
+  implementation "androidx.core:core-ktx:1.9.0"
+  implementation "androidx.localbroadcastmanager:localbroadcastmanager:1.1.0"
+  implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.3"
 }

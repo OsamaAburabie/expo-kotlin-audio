@@ -1,47 +1,165 @@
 package expo.modules.kotlinaudio
 
+import android.util.Log
+import com.doublesymmetry.kotlinaudio.models.*
+import com.doublesymmetry.kotlinaudio.players.QueuedAudioPlayer
+import com.google.android.exoplayer2.ui.R
 import expo.modules.kotlin.modules.Module
 import expo.modules.kotlin.modules.ModuleDefinition
+import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.launch
+import timber.log.Timber
+import java.util.concurrent.TimeUnit
 
 class ExpoKotlinAudioModule : Module() {
-  // Each module class must implement the definition function. The definition consists of components
-  // that describes the module's functionality and behavior.
-  // See https://docs.expo.dev/modules/module-api for more details about available components.
-  override fun definition() = ModuleDefinition {
-    // Sets the name of the module that JavaScript code will use to refer to the module. Takes a string as an argument.
-    // Can be inferred from module's class name, but it's recommended to set it explicitly for clarity.
-    // The module will be accessible from `requireNativeModule('ExpoKotlinAudio')` in JavaScript.
-    Name("ExpoKotlinAudio")
+    private var player: QueuedAudioPlayer? = null
+    private val scope = MainScope()
 
-    // Sets constant properties on the module. Can take a dictionary or a closure that returns a dictionary.
-    Constants(
-      "PI" to Math.PI
-    )
+    override fun definition() = ModuleDefinition {
 
-    // Defines event names that the module can send to JavaScript.
-    Events("onChange")
+        Name("ExpoKotlinAudio")
 
-    // Defines a JavaScript synchronous function that runs the native code on the JavaScript thread.
-    Function("hello") {
-      "Hello world! 👋"
+        OnCreate {
+            player = QueuedAudioPlayer(
+                context, playerConfig = PlayerConfig(
+                    interceptPlayerActionsTriggeredExternally = true,
+                    handleAudioBecomingNoisy = true,
+                    handleAudioFocus = true
+                )
+            )
+
+            setupNotification()
+            observeEvents()
+        }
+
+
+        // Defines a JavaScript synchronous function that runs the native code on the JavaScript thread.
+        Function("hello") {
+            "Hello world! 👋"
+        }
+
+        Function("init") {
+
+        }
+
+        Function("add") {
+            appContext.activityProvider!!.currentActivity.runOnUiThread {
+                player?.add(
+                    DefaultAudioItem(
+                        "https://cdn.pixabay.com/download/audio/2022/08/31/audio_419263fc12.mp3?filename=leonell-cassio-the-blackest-bouquet-118766.mp3",
+                        MediaType.DEFAULT,
+                        "Song 1",
+                        "Artist 1",
+                        "Album 1",
+                        "https://upload.wikimedia.org/wikipedia/en/0/0b/DirtyComputer.png"
+                    ),
+                )
+                player?.play()
+            }
+        }
+
+        Function("play") {
+            play()
+        }
+
+        Function("pause") {
+            pause()
+        }
+
+        Function("stop") {
+            stop()
+        }
+
+        Function("next") {
+            next()
+        }
+
+        Function("previous") {
+            previous()
+        }
+
+        Function("seek") {
+            seek()
+        }
+
     }
 
-    // Defines a JavaScript function that always returns a Promise and whose native code
-    // is by default dispatched on the different thread than the JavaScript runtime runs on.
-    AsyncFunction("setValueAsync") { value: String ->
-      // Send an event to JavaScript.
-      sendEvent("onChange", mapOf(
-        "value" to value
-      ))
+    private val context
+        get() = requireNotNull(appContext.reactContext)
+
+    private fun setupNotification() {
+        val notificationConfig = NotificationConfig(
+            listOf(
+                NotificationButton.PLAY_PAUSE(),
+                NotificationButton.NEXT(isCompact = true),
+                NotificationButton.PREVIOUS(isCompact = true),
+                NotificationButton.BACKWARD(isCompact = true),
+                NotificationButton.FORWARD(
+                    isCompact = true,
+                    icon = R.drawable.exo_icon_circular_play
+                ),
+                NotificationButton.SEEK_TO
+            ), accentColor = null, smallIcon = null, pendingIntent = null
+        )
+        player?.notificationManager?.createNotification(notificationConfig)
     }
 
-    // Enables the module to be used as a native view. Definition components that are accepted as part of
-    // the view definition: Prop, Events.
-    View(ExpoKotlinAudioView::class) {
-      // Defines a setter for the `name` prop.
-      Prop("name") { view: ExpoKotlinAudioView, prop: String ->
-        println(prop)
-      }
+    private fun observeEvents() {
+        scope.launch {
+            player?.event?.onPlayerActionTriggeredExternally?.collect() {
+                Timber.d(it.toString())
+                Log.d("NotificationAction", it.toString())
+                when (it) {
+                    MediaSessionCallback.PLAY -> play()
+                    MediaSessionCallback.PAUSE -> pause()
+                    MediaSessionCallback.NEXT -> next()
+                    MediaSessionCallback.PREVIOUS -> previous()
+                    MediaSessionCallback.STOP -> stop()
+                    is MediaSessionCallback.SEEK -> player?.seek(
+                        it.positionMs,
+                        TimeUnit.MILLISECONDS
+                    )
+                    else -> Timber.d("Event not handled")
+                }
+            }
+        }
     }
-  }
+
+    private fun play() {
+        appContext.activityProvider!!.currentActivity.runOnUiThread {
+            player?.play()
+        }
+    }
+
+    private fun pause() {
+        appContext.activityProvider!!.currentActivity.runOnUiThread {
+            player?.pause()
+        }
+    }
+
+    private fun stop() {
+        appContext.activityProvider!!.currentActivity.runOnUiThread {
+            player?.stop()
+        }
+    }
+
+    private fun next() {
+        appContext.activityProvider!!.currentActivity.runOnUiThread {
+            player?.next()
+        }
+    }
+
+    private fun previous() {
+        appContext.activityProvider!!.currentActivity.runOnUiThread {
+            player?.previous()
+        }
+    }
+
+    private fun seek() {
+        appContext.activityProvider!!.currentActivity.runOnUiThread {
+            player?.seek(10000, TimeUnit.MILLISECONDS)
+        }
+    }
+
+
 }
