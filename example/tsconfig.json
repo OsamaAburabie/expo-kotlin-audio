@@ -1,0 +1,10 @@
+{
+  "extends": "expo/tsconfig.base",
+  "compilerOptions": {
+    "strict": true,
+    "paths": {
+      "expo-kotlin-audio": ["../src/index"],
+      "expo-kotlin-audio/*": ["../src/*"]
+    }
+  }
+}
