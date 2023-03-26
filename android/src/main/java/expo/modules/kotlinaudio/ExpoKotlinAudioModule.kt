@@ -142,6 +142,14 @@ class ExpoKotlinAudioModule : Module() {
             return@Function getState().toString()
         }
 
+        Function("seekTo") { position: Long ->
+            return@Function seekTo(position)
+        }
+
+        Function("reset") {
+            return@Function reset()
+        }
+
     }
 
     private val context
@@ -263,6 +271,12 @@ class ExpoKotlinAudioModule : Module() {
     private fun skipTo(index: Int) {
         runOnUiThread {
             player?.jumpToItem(index, true)
+        }
+    }
+
+    private fun seekTo(position: Long) {
+        runOnUiThread {
+            player?.seek(position, TimeUnit.MILLISECONDS)
         }
     }
 
