@@ -123,3 +123,7 @@ export function getCurrentIndex(): number {
 export function getCurrentTrack(): Track {
   return ExpoKotlinAudioModule.getCurrentTrack();
 }
+
+export function getState(): AudioPlayerState {
+  return ExpoKotlinAudioModule.getState();
+}

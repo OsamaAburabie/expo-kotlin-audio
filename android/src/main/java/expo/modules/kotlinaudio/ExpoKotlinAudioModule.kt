@@ -138,6 +138,10 @@ class ExpoKotlinAudioModule : Module() {
             return@Function getPlaying()
         }
 
+        Function("getState") {
+            return@Function getState().toString()
+        }
+
     }
 
     private val context
@@ -336,6 +340,16 @@ class ExpoKotlinAudioModule : Module() {
                 null
             }
             future.complete(trackMap)
+        }
+        return future.get()
+    }
+
+    @RequiresApi(Build.VERSION_CODES.N)
+    private fun getState(): AudioPlayerState {
+        val future = CompletableFuture<AudioPlayerState>()
+        runOnUiThread {
+            val state = player?.playerState ?: AudioPlayerState.IDLE
+            future.complete(state)
         }
         return future.get()
     }
