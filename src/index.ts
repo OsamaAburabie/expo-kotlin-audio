@@ -127,3 +127,11 @@ export function getCurrentTrack(): Track {
 export function getState(): AudioPlayerState {
   return ExpoKotlinAudioModule.getState();
 }
+
+export function SeekTo(position: number): void {
+  ExpoKotlinAudioModule.SeekTo(position);
+}
+
+export function reset(): void {
+  ExpoKotlinAudioModule.reset();
+}
